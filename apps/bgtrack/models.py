@@ -13,6 +13,9 @@ class GlucoseReading(models.Model):
         return self.reading
     def mmol_l(self):
         return self.reading / MMOL_L_PER_MG_DL
+        
+    def __unicode__(self):
+        return "Reading [%s]: %s mg/dl @ %s" % (self.user.email,self.reading,self.timestamp)
 
 def get_average(user):
     """Get an average of all readings for the user."""
@@ -23,3 +26,4 @@ def get_average(user):
         avg = sum(reading_nums)/len(reading_nums)
     return avg
 User.get_average = get_average
+User.__unicode__ = lambda self:self.email
