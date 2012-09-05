@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{%block content%}
+    <div id="login">
+        {% if form and form.errors|length > 0%}
+            <div id="login-error" class="error-msg">There was an error! {{form.errors}}</div>
+        {%endif%}
+        <form action="/register/" method="POST">
+            <label>{{form.email.label}}
+                <div>{{form.email}}</div>
+            </label>
+            <label>{{form.password1.label}}
+                <div>{{form.password1}}</div>
+            </label>
+            <label>{{form.password2.label}}
+                <div>{{form.password2}}</div>
+            </label>
+            <div class="buttonContainer">
+                <input type="submit" value="Sign up!"/>
+            </div>
+        </form>
+    </div>           
+{%endblock%}

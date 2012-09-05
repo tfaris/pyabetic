@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{%block title%} | Home{%endblock%}
+{%block extraHead%}
+<script type="text/javascript" src="/media/javascript/jquery-ui-timepicker.js"></script>
+<script type="text/javascript">
+    function UpdateUnit(convert){
+        if (convert){
+            ConvertUnits();
+        }
+        var reading_input = $("#id_reading"),
+            reading_value = reading_input.val();        
+        var unit = $("#unit").val(),
+            val = Number(reading_value);
+        if (unit == "mg/dl"){
+            if (reading_value) reading_input.val((val*18).toFixed(0));
+            chart.get("mgdl").show();
+            chart.get("mmoll").hide();
+        }else{
+            if (reading_value) reading_input.val((val/18).toFixed(2));
+            chart.get("mgdl").hide();
+            chart.get("mmoll").show();
+        }
+    }
+    function ConvertUnits(){
+        var unit = $("#unit").val();
+        
+        $(".reading-value").fadeToggle().each(function(){
+            var readingValueElement = $(this);
+            if (unit == "mg/dl"){
+                readingValueElement.text((Number(readingValueElement.text())*18).toFixed(0));
+            }else{
+                readingValueElement.text((Number(readingValueElement.text())/18).toFixed(2));
+            }
+        }).fadeToggle();
+    }
+    $(document).ready(function(){    
+        $("#unit").change(function(){
+            UpdateUnit(true);
+        });
+        var dt = new Date();
+        $("#id_timestamp").datetimepicker({
+            dateFormat : 'yy-mm-dd',
+            timeFormat : 'hh:mm',
+            hour : dt.getHours(),
+            minute : dt.getMinutes()
+        });
+        $("#id_timestamp").val("{{now}}");
+        $("#id_reading").focus();
+    });    
+</script>
+{%endblock%}
+{%block content%}
+    {% if request.user.is_authenticated %}
+        <div id="main-content">
+            <form class="reading-form centered-content" action="/reading/record/" method="POST">
+                {{reading_form.non_field_errors}}
+                <label class="form-label">Reading:{{reading_form.reading}}</label>
+                    <select id="unit" name="unit">
+                        <option>mg/dl</option>
+                        <option>mmol/l</option>
+                    </select>
+                    {{reading_form.reading.errors}}
+                <br>
+                <label class="form-label">Date/Time:{{reading_form.timestamp}}</label>
+                {{reading_form.timestamp.errors}}
+                <br>
+                <input type="hidden" name="user" value="{{request.user.id}}"/>
+                <div class="buttonContainer">
+                    <input type="submit" value="Record">
+                </div>
+            </form>
+            <div >
+                {%include 'bg_chart.html'%}
+                <table class="readings-table" cellspacing="0">
+                    <thead>
+                        <th>Timestamp</th>
+                        <th>Reading</th>
+                    </thead>
+                    <tbody>
+                        {% for reading in readings%}
+                            <tr class="{%cycle 'odd' 'even'%} reading-row" readingId="{{reading.pk}}">
+                                <td class="reading-timestamp">{{reading.timestamp}}</td>
+                                <td class="reading-value">{{reading.reading}}</td>
+                            </tr>
+                        {%endfor%}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {%else%}
+        <div id="login">
+            {% if form and form.errors|length > 0%}
+            <div id="login-error" class="error-msg">There was an error!</div>
+            {%endif%}
+            <form action="/login/" method="POST">
+                <label>{{form.username.label}}
+                    <div>{{form.username}}</div>
+                </label>
+                <label>{{form.password.label}}
+                    <div>{{form.password}}</div>
+                </label>
+                <div class="buttonContainer">
+                    <input type="submit" value="Login"/>
+                </div>
+                <a id="message" href="/register/">Sign up</a> 
+            </form>   
+        </div>        
+    {% endif %}
+    <script type="text/javascript">    
+        var selectedPoint = null;
+        $(document).ready(function(){
+        var pointHighlighter = chart.renderer.circle(0,0,10).attr({
+            fill:"#FCFFC5"
+        }).add();
+        pointHighlighter.hide();
+        $("tr.reading-row").mouseover(function(){
+            var row = $(this),
+                readingId = row.attr("readingId");
+            $(".readings-table tr").removeClass("plotSelected");
+            row.addClass("plotSelected");
+            if (readingId){
+                var point = selectedPoint = chart.get("reading-"+readingId);
+                HighlightPoint(point);
+            }
+        });
+        chart.series[0].options.point.events["mouseOver"] = function(){
+            var pointId = this.id.replace("reading-",""),
+                readingRow = $(".readings-table tr[readingid="+pointId+"]");
+            $(".readings-table tr").removeClass("plotSelected");
+            readingRow.addClass("plotSelected");
+            HighlightPoint(this);
+        };
+        $("#chartContainer,.readings-table").mouseleave(function(){
+            pointHighlighter.hide();
+            $(".readings-table tr").removeClass("plotSelected");
+        });
+        function HighlightPoint(point){
+            var cx = point.plotX+chart.plotLeft,
+                cy = point.plotY+chart.plotTop;
+            point.select();      
+            pointHighlighter.translate(cx,cy);
+            pointHighlighter.show();
+        }
+        UpdateUnit(false);
+        });
+        
+    </script>
+{%endblock%}

@@ -1,0 +1,66 @@
+{%block extraHead%}
+<script type="text/javascript" src="/media/javascript/highcharts.js"></script>
+<script type="text/javascript" src="/media/javascript/highstock.js"></script>
+<script type="text/javascript" src="/media/javascript/hcthemes/gray.js"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        chart = new Highcharts.Chart({
+            chart: {
+                renderTo: 'chartContainer',
+                type: 'line',
+                marginRight: 130,
+                marginBottom: 25,
+                zoomType:'xy'
+            },
+            title: {
+                text: 'Blood Glucose',
+                x: -20 //center
+            },
+            subtitle: {
+                text: "Your average: " + ({{request.user.get_average}}).toFixed(0) + " mg/dl",
+                x: -20
+            },
+            xAxis: {
+                categories: [{%for reading in readings%}"{{reading.timestamp|date:"H:i M. d,y"}}",{%endfor%}],
+                offset:-20
+            },
+            yAxis: {
+                title: {
+                    text: 'Reading'
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            tooltip: {
+                formatter: function() {
+                        return '<b>'+ this.series.name +'</b><br/>'+
+                        this.x +': '+ this.y +' mg/dl';
+                }
+            },
+            legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'top',
+                x: -10,
+                y: 100,
+                borderWidth: 0
+            },
+            series: [
+                {
+                    name: 'Readings mg/dl',
+                    id:"mgdl",
+                    data: [{%for reading in readings%}{y:{{reading.reading}},id:"reading-"+{{reading.pk}}},{%endfor%}]
+                },
+                {
+                    name: 'Readings mmol/l',
+                    id: "mmoll",
+                    data: [{%for reading in readings%}{y:{{reading.mmol_l}},id:"readingmmoll-"+{{reading.pk}}},{%endfor%}]
+                }]
+        });
+    });
+</script>
+{%endblock%}
+<div id="chartContainer"></div>
