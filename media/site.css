@@ -124,6 +124,12 @@ form{
 .reading-form select{
     float:right;
 }
+.readingsContainer{
+    max-width:50%;
+    margin-left:auto;
+    margin-right:auto;
+    margin-bottom:100px;
+}
 
 #chartContainer{
     width:50%;
